@@ -1,0 +1,3 @@
+A simple bootloader for PIC18F devices.
+
+Currently only tested on the PIC18F26K80

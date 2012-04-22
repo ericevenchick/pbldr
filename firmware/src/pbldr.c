@@ -1,5 +1,23 @@
-#include <p18f26k80.h>
+/*
+ * Copyright 2012 Eric Evenchick
+ *
+ * This file is part of pbldr.
+ *
+ * pbldr is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later version.
+ *
+ * pbldr is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with pbldr If not, see http://www.gnu.org/licenses/.
+ */
 
+#include <p18f26k80.h>
+n
 // Configuration Bits
 #pragma config XINST = OFF	// disable extended instructions
 #pragma config FOSC = INTIO2	// using internal RC oscillator (change me)
@@ -47,7 +65,7 @@ void UART1Init(long baud){
 void UART1TxByte(char byte)
 {
     while (!TXSTA1bits.TRMT); // wait until buffer is empty
-    TXREG1 = byte;	      // write the byte
+    TXREG1 = byte;            // write the byte
     return;
 }
 
@@ -64,8 +82,8 @@ void UART1TxROMString(const rom char *str)
     int i = 0;
 
     while(str[i] != 0){
-	UART1TxByte(str[i]);
-	i++;
+        UART1TxByte(str[i]);
+        i++;
     }
     return;
 }
@@ -76,8 +94,8 @@ void UART1TxString(char *str)
     int i = 0;
 
     while(str[i] != 0){
-	UART1TxByte(str[i]);
-	i++;
+        UART1TxByte(str[i]);
+        i++;
     }
     return;
 }
@@ -118,11 +136,11 @@ void FlashWrite(long addr, char *data)
     // load the table latch with data
     for (i = 0; i < 64; i++)
     {
-	TABLAT = data[i];	// copy data from buffer
-	_asm
-	    TBLWTPOSTINC	// increment the table latch
-	_endasm
-	    UART1TxByte(data[i]);
+        TABLAT = data[i];	// copy data from buffer
+        _asm
+            TBLWTPOSTINC	// increment the table latch
+        _endasm
+            UART1TxByte(data[i]);
     }
 
     TBLPTR = addr;
@@ -157,15 +175,15 @@ void main()
 
     for(;;)
     {
-	for (;;)
-	{
-	    if (UART1RxByte() == 'D')
-		break;
-	    for (i = 0; i < 64; i++)
-		buf[i] = UART1RxByte();
-	    FlashWrite(cur_addr, buf);
-	    cur_addr += 64;
-	}
-	UART1TxROMString("DONE\n");
+        for (;;)
+        {
+            if (UART1RxByte() == 'D')
+                break;
+            for (i = 0; i < 64; i++)
+                buf[i] = UART1RxByte();
+            FlashWrite(cur_addr, buf);
+            cur_addr += 64;
+        }
+        UART1TxROMString("DONE\n");
     }
 }
