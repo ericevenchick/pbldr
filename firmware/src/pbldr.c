@@ -69,12 +69,12 @@ void UART1TxByte(char byte)
     return;
 }
 
-// reads a byte from UART 1  
+// reads a byte from UART 1
 char UART1RxByte(unsigned int timeout)
 {
     while (!PIR1bits.RC1IF && timeout > 0)	// wait for data to be available
-    	timeout--;
-	return RCREG1;							// return data byte
+        timeout--;
+    return RCREG1;							// return data byte
 
 }
 // writes a string from ROM to UART1
@@ -141,7 +141,6 @@ void FlashWrite(long addr, char *data)
         _asm
             TBLWTPOSTINC	// increment the table latch
         _endasm
-
     }
 
     TBLPTR = addr;
@@ -174,29 +173,31 @@ void main()
     TRISBbits.TRISB0 = 0;
     PORTBbits.RB0 = 1;
 
-	if (UART1RxByte(20000) == 0)
-		_asm goto 0x800 _endasm
+    // wait for request to load code
+    if (UART1RxByte(20000) == 0)
+        _asm goto 0x800 _endasm	// no request, jump to program
+
 
     UART1TxROMString("OK\n");
-
-	for (;;)
+    for (;;)
     {
         for (i = 0; i < 64; i++)
-		{
+        {
             buf[i] = UART1RxByte(5000);
-           	if (buf[i-3] == 'D' && buf[i-2] == 'O' &&
-				buf[i-1] == 'N' && buf[i] == 'E')
-			{
-               	done = 1;
-           		break;
-			}
-		}
-		FlashWrite(cur_addr, buf);
-           cur_addr += 64;
-           UART1TxByte('K');
-   		if (done)
-			break;	    
-	}
-       UART1TxROMString("DONE\n");
-	_asm goto 0x800 _endasm
+            if (buf[i-3] == 'D' && buf[i-2] == 'O' &&
+                buf[i-1] == 'N' && buf[i] == 'E')
+            {
+                done = 1;
+                break;
+            }
+        }
+        FlashWrite(cur_addr, buf);
+        cur_addr += 64;
+        UART1TxByte('K');
+        if (done)
+            break;
+    }
+
+    UART1TxROMString("DONE\n");
+    _asm goto 0x800 _endasm
 }
