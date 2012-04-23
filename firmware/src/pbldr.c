@@ -17,7 +17,7 @@
  */
 
 #include <p18f26k80.h>
-n
+
 // Configuration Bits
 #pragma config XINST = OFF	// disable extended instructions
 #pragma config FOSC = INTIO2	// using internal RC oscillator (change me)
@@ -73,7 +73,7 @@ void UART1TxByte(char byte)
 char UART1RxByte(void)
 {
     while (!PIR1bits.RC1IF);	// wait for data to be available
-    return RCREG1;		// return data byte
+    return RCREG1;				// return data byte
 
 }
 // writes a string from ROM to UART1
@@ -140,7 +140,7 @@ void FlashWrite(long addr, char *data)
         _asm
             TBLWTPOSTINC	// increment the table latch
         _endasm
-            UART1TxByte(data[i]);
+
     }
 
     TBLPTR = addr;
@@ -175,15 +175,25 @@ void main()
 
     for(;;)
     {
-        for (;;)
+       	for (;;)
         {
-            if (UART1RxByte() == 'D')
-                break;
             for (i = 0; i < 64; i++)
+			{
                 buf[i] = UART1RxByte();
-            FlashWrite(cur_addr, buf);
+            	if (buf[i-3] == 'D' && buf[i-2] == 'O' &&
+					buf[i-1] == 'N' && buf[i] == 'E')
+				{
+                	done = 1;
+            		break;
+				}
+			}
+			FlashWrite(cur_addr, buf);
             cur_addr += 64;
-        }
+            UART1TxByte('K');
+    		if (done)
+				break;	    
+		}
         UART1TxROMString("DONE\n");
+		_asm goto 0x800 _endasm
     }
 }
