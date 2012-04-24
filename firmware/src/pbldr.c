@@ -167,10 +167,6 @@ void main()
 
     UART1Init(115200);
 
-
-    TRISBbits.TRISB0 = 0;
-    PORTBbits.RB0 = 1;
-
     // wait for request to load code
     if (UART1RxByte(20000) == 0)
 	_asm goto 0x800 _endasm	// no request, jump to program
