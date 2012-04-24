@@ -73,7 +73,7 @@ void UART1TxByte(char byte)
 char UART1RxByte(unsigned int timeout)
 {
     while (!PIR1bits.RC1IF && timeout > 0)	// wait for data to be available
-        timeout--;
+	timeout--;
     return RCREG1;							// return data byte
 
 }
@@ -83,8 +83,8 @@ void UART1TxROMString(const rom char *str)
     int i = 0;
 
     while(str[i] != 0){
-        UART1TxByte(str[i]);
-        i++;
+	UART1TxByte(str[i]);
+	i++;
     }
     return;
 }
@@ -95,8 +95,8 @@ void UART1TxString(char *str)
     int i = 0;
 
     while(str[i] != 0){
-        UART1TxByte(str[i]);
-        i++;
+	UART1TxByte(str[i]);
+	i++;
     }
     return;
 }
@@ -106,8 +106,6 @@ void UART1TxString(char *str)
 *************************/
 void FlashErase(long addr)
 {
-//    TBLPTRL = (int)addr;	// load the lower table pointer
-//    TBLPTRH = (int)(addr<<8);	// load the upper table pointer
 
     TBLPTR = addr;
 
@@ -137,10 +135,10 @@ void FlashWrite(long addr, char *data)
     // load the table latch with data
     for (i = 0; i < 64; i++)
     {
-        TABLAT = data[i];	// copy data from buffer
-        _asm
-            TBLWTPOSTINC	// increment the table latch
-        _endasm
+	TABLAT = data[i];	// copy data from buffer
+	_asm
+	    TBLWTPOSTINC	// increment the table latch
+	_endasm
     }
 
     TBLPTR = addr;
@@ -159,7 +157,7 @@ void FlashWrite(long addr, char *data)
     INTCONbits.GIE = 1;		// enable interrupts
 
 }
-// test code
+
 void main()
 {
     int i;
@@ -175,27 +173,27 @@ void main()
 
     // wait for request to load code
     if (UART1RxByte(20000) == 0)
-        _asm goto 0x800 _endasm	// no request, jump to program
+	_asm goto 0x800 _endasm	// no request, jump to program
 
 
     UART1TxROMString("OK\n");
     for (;;)
     {
-        for (i = 0; i < 64; i++)
-        {
-            buf[i] = UART1RxByte(5000);
-            if (buf[i-3] == 'D' && buf[i-2] == 'O' &&
-                buf[i-1] == 'N' && buf[i] == 'E')
-            {
-                done = 1;
-                break;
-            }
-        }
-        FlashWrite(cur_addr, buf);
-        cur_addr += 64;
-        UART1TxByte('K');
-        if (done)
-            break;
+	for (i = 0; i < 64; i++)
+	{
+	    buf[i] = UART1RxByte(5000);
+	    if (buf[i-3] == 'D' && buf[i-2] == 'O' &&
+		buf[i-1] == 'N' && buf[i] == 'E')
+	    {
+		done = 1;
+		break;
+	    }
+	}
+	FlashWrite(cur_addr, buf);
+	cur_addr += 64;
+	UART1TxByte('K');
+	if (done)
+	    break;
     }
 
     UART1TxROMString("DONE\n");
