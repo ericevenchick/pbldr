@@ -43,6 +43,8 @@
 #define FCY 8000000
 #define BOOT_ADDR 0x800
 #define UART_READ_TIMEOUT 20000
+#define REMAP_HIGH_INTERRUPT 0x808
+#define REMAP_LOW_INTERRUPT 0x808
 
 // return the hex value of an ascii character
 // ie, F = 15
@@ -176,6 +178,19 @@ void FlashWrite(long addr, char *data)
 
 }
 
+// interrupt remapping
+#pragma code high_vector=0x08
+void high_isr()
+{
+	_asm goto REMAP_HIGH_INTERRUPT _endasm
+}
+#pragma code low_vector=0x18
+void low_isr()
+{
+	_asm goto REMAP_LOW_INTERRUPT _endasm
+}
+#pragma code
+
 void main()
 {
     int i;
@@ -188,7 +203,7 @@ void main()
 
     // wait for request to load code
     if (UART1RxByte() == -1)
-	_asm goto 0x800 _endasm	// no request, jump to program
+	_asm goto BOOT_ADDR _endasm	// no request, jump to program
 
 
     UART1TxROMString("OK\n");
@@ -214,5 +229,6 @@ void main()
     }
 
     UART1TxROMString("DONE\n");
-    _asm goto 0x800 _endasm
+    _asm goto BOOT_ADDR _endasm
 }
+
