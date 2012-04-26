@@ -42,6 +42,20 @@
 
 #define FCY 8000000
 #define BOOT_ADDR 0x800
+#define UART_READ_TIMEOUT 20000
+#define REMAP_HIGH_INTERRUPT 0x808
+#define REMAP_LOW_INTERRUPT 0x808
+
+// return the hex value of an ascii character
+// ie, F = 15
+int a2h(char c)
+{
+	if (c >= 0x30 && c <= 0x39)
+		return (int)(c-0x30);
+	if (c >= 0x41 && c <= 0x46)
+		return (int)(c-0x37);
+	return -1;
+}
 
 /********************
  UART 1 Functions
@@ -70,11 +84,17 @@ void UART1TxByte(char byte)
 }
 
 // reads a byte from UART 1
-char UART1RxByte(unsigned int timeout)
+char UART1RxByte(void)
 {
-    while (!PIR1bits.RC1IF && timeout > 0)	// wait for data to be available
-	timeout--;
-    return RCREG1;							// return data byte
+	int timeout = 0;
+	// wait for data to be available, or a timeout to occur
+    while (!PIR1bits.RC1IF && timeout < UART_READ_TIMEOUT)
+    	timeout++;
+
+	// on timeout, return -1
+	if (timeout == UART_READ_TIMEOUT)
+		return -1;
+	return RCREG1;							// return data byte
 
 }
 // writes a string from ROM to UART1
@@ -158,9 +178,23 @@ void FlashWrite(long addr, char *data)
 
 }
 
+// interrupt remapping
+#pragma code high_vector=0x08
+void high_isr()
+{
+	_asm goto REMAP_HIGH_INTERRUPT _endasm
+}
+#pragma code low_vector=0x18
+void low_isr()
+{
+	_asm goto REMAP_LOW_INTERRUPT _endasm
+}
+#pragma code
+
 void main()
 {
     int i;
+	char high, low, res;
     long cur_addr = BOOT_ADDR;
     char buf[64];
     char done = 0;
@@ -168,8 +202,8 @@ void main()
     UART1Init(115200);
 
     // wait for request to load code
-    if (UART1RxByte(20000) == 0)
-	_asm goto 0x800 _endasm	// no request, jump to program
+    if (UART1RxByte() == -1)
+	_asm goto BOOT_ADDR _endasm	// no request, jump to program
 
 
     UART1TxROMString("OK\n");
@@ -177,13 +211,15 @@ void main()
     {
 	for (i = 0; i < 64; i++)
 	{
-	    buf[i] = UART1RxByte(5000);
-	    if (buf[i-3] == 'D' && buf[i-2] == 'O' &&
-		buf[i-1] == 'N' && buf[i] == 'E')
+		high = a2h(UART1RxByte());
+		low = a2h(UART1RxByte());
+	    if (high == -1 || low == -1)
 	    {
-		done = 1;
-		break;
+			done = 1;
+			break;
 	    }
+		res = (high<<4) + low;
+		buf[i] = res;
 	}
 	FlashWrite(cur_addr, buf);
 	cur_addr += 64;
@@ -193,5 +229,6 @@ void main()
     }
 
     UART1TxROMString("DONE\n");
-    _asm goto 0x800 _endasm
+    _asm goto BOOT_ADDR _endasm
 }
+
