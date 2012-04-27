@@ -2,7 +2,7 @@ import serial, sys
 from time import sleep
 
 filename = sys.argv[1]
-debug = 0;
+debug = True;
 
 # returns a dictionary that maps each byte of program memory
 # to a byte of opcode read from an INHX32 formatted file
@@ -73,7 +73,8 @@ for i in range(0x800,lastaddr):
 
     # wait for acknowledgement after 64 bytes
     if count == 64:
-        ser.read(1)
+        while ser.read(1) != 'K':
+            pass
         count = 1
         print ".",
     else:
