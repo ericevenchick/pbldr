@@ -41,10 +41,11 @@
 #pragma config WRT3 = OFF
 
 #define FCY 8000000
-#define BOOT_ADDR 0x800
+#define FLASH_ADDR 0x800
+#define BOOT_ADDR 0x820
 #define UART_READ_TIMEOUT 20000
 #define REMAP_HIGH_INTERRUPT 0x808
-#define REMAP_LOW_INTERRUPT 0x808
+#define REMAP_LOW_INTERRUPT 0x818
 
 // return the hex value of an ascii character
 // ie, F = 15
@@ -195,7 +196,7 @@ void main()
 {
     int i;
 	char high, low, res;
-    long cur_addr = BOOT_ADDR;
+    long cur_addr = FLASH_ADDR;
     char buf[64];
     char done = 0;
 
