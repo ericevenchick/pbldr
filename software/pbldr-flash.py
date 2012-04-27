@@ -4,6 +4,8 @@ from time import sleep
 filename = sys.argv[1]
 debug = 0;
 
+# returns a dictionary that maps each byte of program memory
+# to a byte of opcode read from an INHX32 formatted file
 def build_mem_map(f):
     memmap = {}
     f.seek(0)
@@ -13,8 +15,8 @@ def build_mem_map(f):
         linetype = int(line[7:9], 16)
         data = line[9:(9+count*2)]
 
+        # only flash addresses within range
         if addr < 0x800 or addr > 0xffff:
-            print "Address %x out of range!" % addr
             continue
 
         for byte in data.decode('hex'):
@@ -22,6 +24,7 @@ def build_mem_map(f):
             addr = addr + 1
     return memmap
 
+# finds the last address used by an INHX32 formatted file
 def get_last_addr(f):
     lastaddr = 0
     f.seek(0)
@@ -31,31 +34,33 @@ def get_last_addr(f):
             lastaddr = addr
     return lastaddr
 
+# read the INHX32 file
 with open(filename) as f:
     memmap = build_mem_map(f)
     lastaddr = get_last_addr(f)
 
+
 ser = serial.Serial(4, 115200, timeout=0.2)
-
 print "Opening port:", ser.portstr
-
 ready = False
 
 print "Waiting for target..."
 
+# send the target data until a response is received
 for i in range(0,50):
     ser.write('S')
     if (ser.readline() == "OK\n"): # check for response
         ready = True
         break;
+
+# a timeout occured, give up
 if not ready:
     print "No response from target!"
     quit()
 
-count = 1
-
 print "Flashing region %x - %x" % (0x800, lastaddr)
 
+count = 1
 for i in range(0x800,lastaddr):
     if memmap.has_key(i):
         ser.write(memmap[i].encode('hex').upper())
@@ -66,6 +71,7 @@ for i in range(0x800,lastaddr):
         if debug:
             print "%x: FF" % (i)
 
+    # wait for acknowledgement after 64 bytes
     if count == 64:
         ser.read(1)
         count = 1
@@ -73,7 +79,8 @@ for i in range(0x800,lastaddr):
     else:
         count = count + 1
 
+# indicate end of programming
 for i in range(0,64):
-    ser.write('D')
+    ser.write('k')
 
 print "Flash Complete!"
