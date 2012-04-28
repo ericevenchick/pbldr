@@ -3,7 +3,14 @@
 #pragma interrupt isr_high
 void isr_high()
 {
-	return;
+	char state = LATBbits.LATB0;
+
+	INTCONbits.TMR0IF = 0;
+
+	if (state == 0)
+		PORTBbits.RB0 = 1;
+	else
+		PORTBbits.RB0 = 0;	
 }
 #pragma interruptlow isr_low
 void isr_low()
@@ -29,12 +36,16 @@ void main()
 {
     int i;
     TRISBbits.TRISB0 = 0;
-    
-	for (;;)
-	{
-	    PORTBbits.RB0 = 1;
-		for (i = 0; i < 10000; i++);
-		PORTBbits.RB0 = 0;
-		for (i = 0; i < 10000; i++);
-	}
+	PORTBbits.RB0 = 1;
+
+	T0CONbits.T08BIT = 0;
+	T0CONbits.T0CS = 0;
+	T0CONbits.T0PS = 255;
+	T0CONbits.TMR0ON =1;
+    INTCONbits.GIE = 1;
+	INTCONbits.TMR0IF = 0;
+	INTCONbits.TMR0IE = 1;
+
+
+	for (;;);
 }

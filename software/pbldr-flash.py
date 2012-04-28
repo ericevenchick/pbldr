@@ -2,7 +2,7 @@ import serial, sys
 from time import sleep
 
 filename = sys.argv[1]
-debug = True;
+debug = False;
 
 # returns a dictionary that maps each byte of program memory
 # to a byte of opcode read from an INHX32 formatted file
