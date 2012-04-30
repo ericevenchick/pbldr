@@ -41,13 +41,18 @@
 #pragma config WRT3 = OFF
 
 #define FCY 8000000
-#define FLASH_ADDR 0x800
-#define BOOT_ADDR 0x820
+
 #define REMAP_HIGH_INTERRUPT 0x808
 #define REMAP_LOW_INTERRUPT 0x818
 
 // choose protocol here
-#define USE_UART
+//#define USE_UART
+
+#define USE_CAN
+#define CAN_BITRATE 500000
+#define CAN_ID 0x1
+
+void run(void);
 
 /************************
  Program Memory Functions
@@ -108,11 +113,13 @@ void FlashWrite(long addr, char *data)
 
 #ifdef USE_UART
 #include "uart.h"
+#define FLASH_ADDR 0x800
+#define BOOT_ADDR 0x820
 
 void main()
 {
     int i;
-	char high, low, res;
+    char high, low, res;
     long cur_addr = FLASH_ADDR;
     char buf[64];
     char done = 0;
@@ -121,7 +128,7 @@ void main()
 
     // wait for request to load code
     if (UART1RxByte() == -1)
-	_asm goto BOOT_ADDR _endasm	// no request, jump to program
+	run();
 
 
     UART1TxROMString("OK\n");
@@ -147,9 +154,61 @@ void main()
     }
 
     UART1TxROMString("DONE\n");
-    _asm goto BOOT_ADDR _endasm
+    run();
 }
 
+#endif
+
+#ifdef USE_CAN
+#include "can.h"
+
+#define FLASH_ADDR 0x940
+#define BOOT_ADDR 0x960
+
+void main()
+{
+    int timeout;
+    int i;
+    char buf[64];
+    long cur_addr = FLASH_ADDR;
+
+    CANInit(CAN_BITRATE);
+
+    // configure CAN filter
+    RXF0SIDH = CAN_ID >> 3;
+    RXF0SIDL = CAN_ID << 5;
+
+    timeout = 30000;
+    while(!RXB0CONbits.RXFUL)// && timeout > 0)
+	timeout--;
+    if (timeout == 0)
+	run();		// timeout occured, start program
+
+    i = 0;
+    for (;;)
+    {
+		RXB0CONbits.RXFUL = 0;
+		while(!RXB0CONbits.RXFUL); // wait for a message
+		if (RXB0D1 = 0x10)
+			run();
+		buf[i] = RXB0D2;
+		i++;
+		buf[i] = RXB0D3;
+		i++;
+		buf[i] = RXB0D4;
+		i++;
+		buf[i] = RXB0D5;
+		i++;
+
+		if (i == 64)
+		{
+		    FlashWrite(cur_addr, buf);
+		    cur_addr += 64;
+		    CANTx(0x10, 1, 'k',0,0,0,0,0,0,0);
+			i = 0;
+		}
+    }
+}
 #endif
 
 // interrupt remapping
@@ -162,4 +221,10 @@ void high_isr()
 void low_isr()
 {
 	_asm goto REMAP_LOW_INTERRUPT _endasm
+}
+
+// start the user program
+void run(void)
+{
+    _asm goto BOOT_ADDR _endasm
 }
