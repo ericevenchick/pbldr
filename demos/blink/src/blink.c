@@ -31,7 +31,7 @@ void low_int()
 
 
 
-#pragma code main=0x820
+#pragma code main
 void main()
 {
     int i;
