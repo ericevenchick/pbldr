@@ -7,7 +7,7 @@ void CANInit(long baud)
 	// configure inputs and outputs
 	TRISBbits.TRISB2 = 0;
 	TRISBbits.TRISB3 = 1;
-	
+
 	// go to config mode
 	CANCONbits.REQOP = 0b100;
 	while(CANSTATbits.OPMODE != 0b100);
@@ -18,20 +18,20 @@ void CANInit(long baud)
 	BRGCON2bits.PRSEG = 0;		// 4x propagation time
 	BRGCON2bits.SEG1PH = 0;		// 2x phase segment
 
-	CIOCONbits.ENDRHI = 1;		// Vdd when recessive, prevents crosstalk 
+	CIOCONbits.ENDRHI = 1;		// Vdd when recessive, prevents crosstalk
 
 	PIR5bits.RXB0IF = 0;
 	PIE5bits.RXB0IE = 1;		// enable receive interrupt
 
 	RXB0CONbits.RXM0 = 0;
-	RXB0CONbits.RXM1 = 0;		
+	RXB0CONbits.RXM1 = 0;
 
 	// go to normal mode
 	CANCONbits.REQOP = 0;
 	while(CANSTATbits.OPMODE != 0);
 }
 
-void CANTx(int id, char dlc, char b0, char b1, char b2, char b3, 
+void CANTx(int id, char dlc, char b0, char b1, char b2, char b3,
 	char b4, char b5, char b6, char b7)
 {
 	TXB0SIDH = id >> 3;
