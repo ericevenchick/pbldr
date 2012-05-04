@@ -41,26 +41,32 @@
 #pragma config WRT2 = OFF
 #pragma config WRT3 = OFF
 
-#define FCY 8000000
 
-#define REMAP_HIGH_INTERRUPT 0x808
-#define REMAP_LOW_INTERRUPT 0x818
+
+// Configuration
 
 // choose protocol here
 #define USE_UART
+#define UART_BITRATE 115200
 
 //#define USE_CAN
 //#define CAN_BITRATE 500000
 //#define CAN_ID 0x1
 
+// End of configuration
+
+#define FCY 8000000
 void run(void);
 
 #ifdef USE_UART
 #include "uart.h"
+
 #define FLASH_ADDR 0x800
 #define BOOT_ADDR 0x820
+#define REMAP_HIGH_INTERRUPT 0x808
+#define REMAP_LOW_INTERRUPT 0x818
 
-void main()
+void UARTFlash()
 {
     int i;
     char high, low, res;
@@ -68,12 +74,11 @@ void main()
     char buf[64];
     char done = 0;
 
-    UART1Init(115200);
+    UART1Init(UART_BITRATE);
 
     // wait for request to load code
     if (UART1RxByte() == -1)
 	run();
-
 
     UART1TxROMString("OK\n");
     for (;;)
@@ -108,8 +113,10 @@ void main()
 
 #define FLASH_ADDR 0x940
 #define BOOT_ADDR 0x960
+#define REMAP_HIGH_INTERRUPT 0x948
+#define REMAP_LOW_INTERRUPT 0x958
 
-void main()
+void CANFlash()
 {
     int timeout;
     int i;
@@ -155,6 +162,16 @@ void main()
     }
 }
 #endif
+
+void main(void)
+{
+#ifdef USE_CAN
+    CANFlash();
+#endif
+#ifdef USE_UART
+    UARTFlash();
+#endif
+}
 
 // interrupt remapping
 #pragma code high_vector=0x08
