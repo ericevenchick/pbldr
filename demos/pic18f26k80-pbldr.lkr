@@ -24,15 +24,15 @@ LIBPATH .
 
 // for pbldr, 0x800 - 0x820 is reserved 
 #IFDEF _DEBUGCODESTART
-  CODEPAGE   NAME=page       START=0x800               END=0x81E
+  CODEPAGE   NAME=page       START=0x900               END=0x91E
   CODEPAGE   NAME=debug      START=_DEBUGCODESTART     END=_CEND        PROTECTED
 #ELSE
-  CODEPAGE   NAME=page       START=0x800               END=0x81E
+  CODEPAGE   NAME=page       START=0x900               END=0x91E
 #FI
 
 // pbldr specific sections
-// main program starts at 0x820
-CODEPAGE   NAME=main	   START=0x820				   END=0xFFFF
+// main program starts at 0x920
+CODEPAGE   NAME=main	   START=0x920				   END=0xFFFF
 SECTION    NAME=main       ROM=main
 
 CODEPAGE   NAME=userid     START=0x200000          END=0x200007       PROTECTED

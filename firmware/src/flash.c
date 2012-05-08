@@ -3,7 +3,7 @@
 /************************
  Program Memory Functions
 *************************/
-void FlashErase(long addr)
+void FlashErase(unsigned int addr)
 {
 
     TBLPTR = addr;
@@ -23,7 +23,7 @@ void FlashErase(long addr)
     INTCONbits.GIE = 1;		// enable interrupts
 }
 
-void FlashWrite(long addr, char *data)
+void FlashWrite(unsigned int addr, char *data)
 {
     int i;
 
@@ -55,4 +55,26 @@ void FlashWrite(long addr, char *data)
 
     INTCONbits.GIE = 1;		// enable interrupts
 
+}
+
+unsigned int CalcProgramChecksum(unsigned int addr)
+{
+	long checksum = 0;
+	int temp;
+	while (addr < 0xfffc)
+	{
+		TBLPTR = addr;
+		_asm TBLRD _endasm
+		checksum += TABLAT;
+		addr++;
+	}
+	// add the checksum value
+	TBLPTR = 0xfffc;
+	_asm TBLRD _endasm	
+	temp = TABLAT;	
+	checksum += (temp << 8);
+	TBLPTR = 0xfffd;
+	_asm TBLRD _endasm		
+	checksum += TABLAT;
+	return (unsigned int)checksum;
 }

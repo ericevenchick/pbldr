@@ -61,16 +61,16 @@ void run(void);
 #ifdef USE_UART
 #include "uart.h"
 
-#define FLASH_ADDR 0x800
-#define BOOT_ADDR 0x820
-#define REMAP_HIGH_INTERRUPT 0x808
-#define REMAP_LOW_INTERRUPT 0x818
+#define FLASH_ADDR 0x900
+#define BOOT_ADDR 0x920
+#define REMAP_HIGH_INTERRUPT 0x908
+#define REMAP_LOW_INTERRUPT 0x918
 
-void UARTFlash()
+void UARTFlash(void)
 {
     int i;
     char high, low, res;
-    long cur_addr = FLASH_ADDR;
+    int cur_addr = FLASH_ADDR;
     char buf[64];
     char done = 0;
 
@@ -80,7 +80,10 @@ void UARTFlash()
     if (UART1RxByte() == -1)
 	run();
 
-    UART1TxROMString("OK\n");
+    UART1TxByte('O');
+    UART1TxByte('K');
+    UART1TxByte('\n');
+
     for (;;)
     {
 	for (i = 0; i < 64; i++)
@@ -101,8 +104,11 @@ void UARTFlash()
 	if (done)
 	    break;
     }
-
-    UART1TxROMString("DONE\n");
+    UART1TxByte('D');
+    UART1TxByte('O');
+    UART1TxByte('N');
+    UART1TxByte('E');
+    UART1TxByte('\n');
     run();
 }
 
@@ -116,12 +122,12 @@ void UARTFlash()
 #define REMAP_HIGH_INTERRUPT 0x948
 #define REMAP_LOW_INTERRUPT 0x958
 
-void CANFlash()
+void CANFlash(void)
 {
     int timeout;
     int i;
     char buf[64];
-    long cur_addr = FLASH_ADDR;
+    int cur_addr = FLASH_ADDR;
 
     CANInit(CAN_BITRATE);
 
@@ -163,8 +169,11 @@ void CANFlash()
 }
 #endif
 
+int chk;
+
 void main(void)
 {
+	chk = CalcProgramChecksum(0x900);
 #ifdef USE_CAN
     CANFlash();
 #endif

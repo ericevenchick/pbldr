@@ -18,12 +18,12 @@ void isr_low()
 	return;
 }
 
-#pragma code high_vector=0x808
+#pragma code high_vector=0x908
 void high_int()
 {
 	_asm goto isr_high _endasm
 }
-#pragma code low_vector=0x818
+#pragma code low_vector=0x918
 void low_int()
 {
 	_asm goto isr_low _endasm

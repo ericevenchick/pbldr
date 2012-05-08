@@ -1,7 +1,8 @@
 #ifndef _FLASH_H_
 #define _FLASH_H_
 
-void FlashErase(long addr);
-void FlashWrite(long addr, char *data);
+void FlashErase(unsigned int addr);
+void FlashWrite(unsigned int addr, char *data);
+int CalcProgramChecksum(unsigned int addr);
 
 #endif

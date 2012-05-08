@@ -43,6 +43,7 @@ char UART1RxByte(void)
 	return RCREG1;							// return data byte
 
 }
+/*
 // writes a string from ROM to UART1
 void UART1TxROMString(const rom char *str)
 {
@@ -54,7 +55,8 @@ void UART1TxROMString(const rom char *str)
     }
     return;
 }
-
+*/
+/*
 // writes a string from RAM to UART1
 void UART1TxString(char *str)
 {
@@ -66,7 +68,7 @@ void UART1TxString(char *str)
     }
     return;
 }
-
+*/
 // return the hex value of an ascii character
 // ie, F = 15
 int a2h(char c)
