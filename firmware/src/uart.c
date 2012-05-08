@@ -1,7 +1,7 @@
 #include <p18f26k80.h>
 
 #define FCY 8000000
-#define UART_READ_TIMEOUT 10000
+#define UART_READ_TIMEOUT 20000
 
 /********************
  UART 1 Functions
