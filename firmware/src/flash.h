@@ -3,6 +3,6 @@
 
 void FlashErase(unsigned int addr);
 void FlashWrite(unsigned int addr, char *data);
-int CalcProgramChecksum(unsigned int addr);
+unsigned int CalcProgramChecksum(unsigned int start_addr);
 
 #endif

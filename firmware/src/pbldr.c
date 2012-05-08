@@ -56,6 +56,7 @@
 // End of configuration
 
 #define FCY 8000000
+int chk;
 void run(void);
 
 #ifdef USE_UART
@@ -78,7 +79,7 @@ void UARTFlash(void)
 
     // wait for request to load code
     if (UART1RxByte() == -1)
-	run();
+		run();
 
     UART1TxByte('O');
     UART1TxByte('K');
@@ -109,6 +110,7 @@ void UARTFlash(void)
     UART1TxByte('N');
     UART1TxByte('E');
     UART1TxByte('\n');
+	chk = CalcProgramChecksum((unsigned int)FLASH_ADDR);
     run();
 }
 
@@ -169,11 +171,9 @@ void CANFlash(void)
 }
 #endif
 
-int chk;
-
 void main(void)
 {
-	chk = CalcProgramChecksum(0x900);
+	chk = CalcProgramChecksum((unsigned int)FLASH_ADDR);
 #ifdef USE_CAN
     CANFlash();
 #endif
@@ -197,5 +197,8 @@ void low_isr()
 // start the user program
 void run(void)
 {
-    _asm goto BOOT_ADDR _endasm
+	// only run if checksum is valid
+	if (chk == 0)
+    	_asm goto BOOT_ADDR _endasm
+	_asm reset _endasm
 }

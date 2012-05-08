@@ -38,9 +38,6 @@ def generate_checksum(memmap):
     checksum = 0;
     for i in range (0x900, 0xFFFC):
 	if memmap.has_key(i):
-	    print "%x: " % i,
-	    print "%x" % (checksum),
-	    print " + %x" % int(memmap[i],16)
 	    checksum = checksum + int(memmap[i], 16)
 	else:
 	    checksum = checksum + 0xFF
@@ -86,7 +83,7 @@ count = 1
 for i in range(0x900,0xFFFF):
     if memmap.has_key(i):
 	ser.write(memmap[i].upper())
-	if debug or i > 0xff00:
+	if debug:
 	    print "%x: %s" % (i, memmap[i].upper())
     else:
 	ser.write("FF")

@@ -57,16 +57,17 @@ void FlashWrite(unsigned int addr, char *data)
 
 }
 
-unsigned int CalcProgramChecksum(unsigned int addr)
+unsigned int CalcProgramChecksum(unsigned int start_addr)
 {
+	unsigned int cur_addr = start_addr;
 	long checksum = 0;
 	int temp;
-	while (addr < 0xfffc)
+	while (cur_addr < 0xfffc)
 	{
-		TBLPTR = addr;
+		TBLPTR = cur_addr;
 		_asm TBLRD _endasm
 		checksum += TABLAT;
-		addr++;
+		cur_addr++;
 	}
 	// add the checksum value
 	TBLPTR = 0xfffc;
