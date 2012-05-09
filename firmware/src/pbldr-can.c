@@ -18,7 +18,7 @@
 
 #include <p18f26k80.h>
 #include "flash.h"
-#include "uart.h"
+#include "can.h"
 
 // Configuration Bits
 #pragma config XINST = OFF	// disable extended instructions
@@ -42,104 +42,100 @@
 #pragma config WRT2 = OFF
 #pragma config WRT3 = OFF
 
+
+
 // Configuration
 
-#define USE_UART
-#define UART_BITRATE 115200
+#define CAN_BITRATE 500000
+#define CAN_ID 0x1
 
 // End of configuration
 
-// Constants, don't change these
-// ...unless you know what you're doing
+// Constants
 
 #define FCY 8000000
-#define FLASH_ADDR 0x900
-#define BOOT_ADDR 0x920
-#define REMAP_HIGH_INTERRUPT 0x908
-#define REMAP_LOW_INTERRUPT 0x918
+#define FLASH_ADDR 0x940
+#define BOOT_ADDR 0x960
+#define REMAP_HIGH_INTERRUPT 0x948
+#define REMAP_LOW_INTERRUPT 0x958
 
 // End of constants
 
 int chk;
 void run(void);
 
-void UARTFlash(void)
+void CANFlash(void)
 {
+    int timeout;
     int i;
-    char high, low, res;
-    int cur_addr = FLASH_ADDR;
     char buf[64];
-    char done = 0;
+    int cur_addr = FLASH_ADDR;
 
-    UART1Init(UART_BITRATE);
+    CANInit(CAN_BITRATE);
 
-    // wait for request to load code
-    if (UART1RxByte() == -1)
-        run();
+    // configure CAN filter
+    RXF0SIDH = CAN_ID >> 3;
+    RXF0SIDL = CAN_ID << 5;
 
-    UART1TxByte('O');
-    UART1TxByte('K');
-    UART1TxByte('\n');
+    timeout = 30000;
+    while(!RXB0CONbits.RXFUL && timeout > 0)
+	timeout--;
+    if (timeout == 0)
+	run();		// timeout occured, start program
 
+    i = 0;
     for (;;)
     {
-        for (i = 0; i < 64; i++)
-        {
-            // receive data as ascii and convert to hex
-            high = a2h(UART1RxByte());
-            low = a2h(UART1RxByte());
-            // non-hex byte received, stop flashing
-            if (high == -1 || low == -1)
-            {
-                done = 1;
-                break;
-            }
-            res = (high<<4) + low;
-            buf[i] = res;
-        }
-        FlashWrite(cur_addr, buf);
-        cur_addr += 64;
-        UART1TxByte('K');
-        if (done)
-            break;
+
+	RXB0CONbits.RXFUL = 0;
+	while(!RXB0CONbits.RXFUL); // wait for a message
+	if (RXB0D1 = 0x10)
+	    run();
+	buf[i] = RXB0D2;
+	i++;
+	buf[i] = RXB0D3;
+	i++;
+	buf[i] = RXB0D4;
+	i++;
+	buf[i] = RXB0D5;
+	i++;
+
+	if (i == 64)
+	{
+	    FlashWrite(cur_addr, buf);
+	    cur_addr += 64;
+	    CANTx(0x10, 1, 'k',0,0,0,0,0,0,0);
+	    i = 0;
+	}
     }
-    // tell the PC that we've finished flashing
-    UART1TxByte('D');
-    UART1TxByte('O');
-    UART1TxByte('N');
-    UART1TxByte('E');
-    UART1TxByte('\n');
-    // new code, so recalculate the checksum
-    chk = CalcProgramChecksum((unsigned int)FLASH_ADDR);
-    run();
 }
+#endif
 
 void main(void)
 {
-    chk = CalcProgramChecksum((unsigned int)FLASH_ADDR);
-    UARTFlash();
+	chk = CalcProgramChecksum((unsigned int)FLASH_ADDR);
+    CANFlash();
 }
 
 // interrupt remapping
 #pragma code high_vector=0x08
 void high_isr()
 {
-    _asm goto REMAP_HIGH_INTERRUPT _endasm
+	_asm goto REMAP_HIGH_INTERRUPT _endasm
 }
 #pragma code low_vector=0x18
 void low_isr()
 {
-    _asm goto REMAP_LOW_INTERRUPT _endasm
+	_asm goto REMAP_LOW_INTERRUPT _endasm
 }
 
 // start the user program
 void run(void)
 {
-    // only run if checksum is valid
-    if (chk == 0) 
+	// only run if checksum is valid
+	if (chk == 0)
     {
-        _asm goto BOOT_ADDR _endasm
+    	_asm goto BOOT_ADDR _endasm
     }
-    // otherwise, reset the device
-    _asm reset _endasm
+	_asm reset _endasm
 }
