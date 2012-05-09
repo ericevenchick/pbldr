@@ -2,3 +2,5 @@
 *.hex
 *.map
 *.cof
+*.mcs
+*.mcw
