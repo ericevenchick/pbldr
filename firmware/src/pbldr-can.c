@@ -79,41 +79,40 @@ void CANFlash(void)
 
     timeout = 30000;
     while(!RXB0CONbits.RXFUL && timeout > 0)
-	timeout--;
+        timeout--;
     if (timeout == 0)
-	run();		// timeout occured, start program
+        run();		// timeout occured, start program
 
     i = 0;
     for (;;)
     {
 
-	RXB0CONbits.RXFUL = 0;
-	while(!RXB0CONbits.RXFUL); // wait for a message
-	if (RXB0D1 = 0x10)
-	    run();
-	buf[i] = RXB0D2;
-	i++;
-	buf[i] = RXB0D3;
-	i++;
-	buf[i] = RXB0D4;
-	i++;
-	buf[i] = RXB0D5;
-	i++;
+        RXB0CONbits.RXFUL = 0;
+        while(!RXB0CONbits.RXFUL); // wait for a message
+        if (RXB0D1 = 0x10)
+            run();
+        buf[i] = RXB0D2;
+        i++;
+        buf[i] = RXB0D3;
+        i++;
+        buf[i] = RXB0D4;
+        i++;
+        buf[i] = RXB0D5;
+        i++;
 
-	if (i == 64)
-	{
-	    FlashWrite(cur_addr, buf);
-	    cur_addr += 64;
-	    CANTx(0x10, 1, 'k',0,0,0,0,0,0,0);
-	    i = 0;
-	}
+        if (i == 64)
+        {
+            FlashWrite(cur_addr, buf);
+            cur_addr += 64;
+            CANTx(0x10, 1, 'k',0,0,0,0,0,0,0);
+            i = 0;
+        }
     }
 }
-#endif
 
 void main(void)
 {
-	chk = CalcProgramChecksum((unsigned int)FLASH_ADDR);
+    chk = CalcProgramChecksum((unsigned int)FLASH_ADDR);
     CANFlash();
 }
 
@@ -121,21 +120,21 @@ void main(void)
 #pragma code high_vector=0x08
 void high_isr()
 {
-	_asm goto REMAP_HIGH_INTERRUPT _endasm
+    _asm goto REMAP_HIGH_INTERRUPT _endasm
 }
 #pragma code low_vector=0x18
 void low_isr()
 {
-	_asm goto REMAP_LOW_INTERRUPT _endasm
+    _asm goto REMAP_LOW_INTERRUPT _endasm
 }
 
 // start the user program
 void run(void)
 {
-	// only run if checksum is valid
-	if (chk == 0)
+    // only run if checksum is valid
+    if (chk == 0)
     {
-    	_asm goto BOOT_ADDR _endasm
+        _asm goto BOOT_ADDR _endasm
     }
-	_asm reset _endasm
+    _asm reset _endasm
 }
